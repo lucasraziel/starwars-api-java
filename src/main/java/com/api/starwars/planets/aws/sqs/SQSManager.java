@@ -1,6 +1,6 @@
 package com.api.starwars.planets.aws.sqs;
 
-import com.api.starwars.planets.handler.interfaces.ISQSManager;
+import com.api.starwars.planets.storage.interfaces.ISQSManager;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
@@ -9,9 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.aws.messaging.core.QueueMessagingTemplate;
 import org.springframework.cloud.aws.messaging.listener.SqsMessageDeletionPolicy;
 import org.springframework.cloud.aws.messaging.listener.annotation.SqsListener;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -22,16 +20,13 @@ import static java.text.MessageFormat.format;
 
 @Slf4j
 @Service
-@Configuration
-@EnableScheduling
 public class SQSManager implements ISQSManager {
 
     private final QueueMessagingTemplate queueMessagingTemplate;
 
     @Setter
-    @Value("${cloud.aws.end-point.uri}")
+    @Value("${cloud.aws.sqs.planet-delete-uri}")
     private String planetDeleteQueueURL;
-
 
     @Autowired
     public SQSManager(QueueMessagingTemplate queueMessagingTemplate) {
@@ -51,7 +46,6 @@ public class SQSManager implements ISQSManager {
         queueMessagingTemplate.convertAndSend(planetDeleteQueueURL, bodyMessage.toJSONString(), headers);
         log.info(format("Planet delete event sent. planetName: {0}.", planetName));
     }
-
 
     @SqsListener(value = "planet-delete.fifo", deletionPolicy = SqsMessageDeletionPolicy.ON_SUCCESS)
     public void processDeleteEventMessages(String message, @Header("SenderId") String senderId) {
